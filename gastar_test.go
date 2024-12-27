@@ -19,8 +19,6 @@ func (js jugState) Hash() string {
 	return fmt.Sprintf("(%d,%d)(%d,%d)",
 		js.jug1.current, js.jug1.cap, js.jug2.current,
 		js.jug2.cap)
-	// return js.jug1.current + 10*js.jug1.cap +
-	// 	js.jug2.current + 10*js.jug2.cap
 }
 
 type waterjugs struct {
