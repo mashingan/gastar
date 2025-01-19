@@ -18,6 +18,7 @@ package gastar
 
 import (
 	"cmp"
+	"container/heap"
 	"slices"
 )
 
@@ -58,23 +59,24 @@ func PathFind[K Hasher, V any, H cmp.Ordered](g Grapher[K, V, H], start, goal K)
 		visiting  = priorityQueue[K, H]{}
 		thecost   H
 	)
+	heap.Init(&visiting)
 	costSoFar[start.Hash()] = thecost
 	visited[start.Hash()] = start
-	visiting.Push(queueNode[K, H]{node: start, cost: thecost})
+	heap.Push(&visiting, queueNode[K, H]{node: start, cost: thecost})
 	for visiting.Len() > 0 {
-		next := visiting.Pop()
+		next := heap.Pop(&visiting).(queueNode[K, H])
 		node := next.node
 		if node.Hash() == goal.Hash() {
 			break
 		}
 		neighbors := g.Neighbors(node)
 		for _, neighbor := range neighbors {
-			thecost = costSoFar[neighbor.Hash()] + g.Cost(node, neighbor)
+			thecost := costSoFar[neighbor.Hash()] + g.Cost(node, neighbor)
 			nextcost, ok := costSoFar[neighbor.Hash()]
 			if !ok || thecost < nextcost {
 				priority := thecost + g.Distance(node, neighbor)
 				costSoFar[neighbor.Hash()] = thecost
-				visiting.Push(queueNode[K, H]{node: neighbor, cost: priority})
+				heap.Push(&visiting, queueNode[K, H]{node: neighbor, cost: priority})
 				visited[neighbor.Hash()] = node
 			}
 		}
@@ -107,11 +109,12 @@ func (pq priorityQueue[K, H]) Len() int           { return len(pq) }
 func (pq priorityQueue[K, H]) Less(i, j int) bool { return pq[i].cost < pq[j].cost }
 func (pq priorityQueue[K, H]) Swap(i, j int)      { pq[i], pq[j] = pq[j], pq[i] }
 
-func (pq *priorityQueue[K, H]) Push(v queueNode[K, H]) {
-	*pq = append(*pq, v)
+func (pq *priorityQueue[K, H]) Push(v any) {
+	vv := v.(queueNode[K, H])
+	*pq = append(*pq, vv)
 }
 
-func (pq *priorityQueue[K, H]) Pop() queueNode[K, H] {
+func (pq *priorityQueue[K, H]) Pop() any {
 	length := len(*pq)
 	old := *pq
 	v := old[length-1]

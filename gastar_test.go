@@ -91,3 +91,77 @@ func TestUseGastar(t *testing.T) {
 	t.Log(paths)
 	t.Log("paths length:", len(paths))
 }
+
+type knapsackGraph struct {
+	Grapher[knapsackItem, knapsackItem, int]
+	items []knapsackItem
+}
+
+type knapsackItem struct {
+	name          string
+	capacity      uint
+	currentWeight uint
+	weight        uint
+	value         uint
+	currentValue  uint
+}
+
+func (ki knapsackItem) Hash() string {
+	return fmt.Sprintf("(%s,%d,%d,%d,%d,%d)", ki.name, ki.weight, ki.value,
+		ki.capacity, ki.currentWeight, ki.currentValue)
+}
+
+const knapsackCap = 50
+
+func (knapsackGraph) Cost(a, b knapsackItem) int {
+	if b.weight == 0 {
+		return 0
+	}
+	return int(-(a.currentValue + (b.value / b.weight)))
+}
+
+func (kg knapsackGraph) Neighbors(item knapsackItem) []knapsackItem {
+	kitems := []knapsackItem{}
+	for _, inv := range kg.items {
+		if item.currentWeight+inv.weight > item.capacity {
+			continue
+		}
+		newitem := inv
+		newitem.currentWeight = item.currentWeight + newitem.weight
+		newitem.currentValue = newitem.value + item.currentValue
+		kitems = append(kitems, newitem)
+
+	}
+	if len(kitems) == 0 {
+		kitems = append(kitems, knapsackItem{name: "full", weight: knapsackCap})
+	}
+	return kitems
+}
+
+func TestKnapsack(t *testing.T) {
+	k := knapsackGraph{items: []knapsackItem{
+		{name: "ransom", capacity: knapsackCap, weight: 10, value: 30},
+		{name: "health-kit", capacity: knapsackCap, weight: 20, value: 100},
+		{name: "elixir", capacity: knapsackCap, weight: 30, value: 120},
+	},
+	}
+
+	k.Grapher = NewDefault[knapsackItem, knapsackItem, int]()
+	empty := knapsackItem{name: "empty", capacity: knapsackCap}
+	goal := knapsackItem{name: "full", weight: knapsackCap}
+	paths := PathFind[knapsackItem, knapsackItem](k, empty, goal)
+	if len(paths) < 5 {
+		t.Errorf("Expected get 5 paths exact, found less: (%d)\n", len(paths))
+	}
+	const hk = "health-kit"
+	if paths[1].name != hk || paths[2].name != hk {
+		t.Errorf("Expecting health-kit item for 2 first, got other: (%s, %s)\n",
+			paths[1].name, paths[2].name)
+	}
+	if paths[3].name != "ransom" {
+		t.Errorf("Expecting last item is ransom, got other: (%s)\n",
+			paths[3].name)
+	}
+	t.Log(paths)
+	t.Log("paths length:", len(paths))
+}
