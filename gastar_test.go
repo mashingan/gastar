@@ -92,6 +92,25 @@ func TestUseGastar(t *testing.T) {
 	t.Log("paths length:", len(paths))
 }
 
+func BenchmarkFindPath(b *testing.B) {
+	w := waterjugs{}
+	w.Grapher = NewDefault[jugState, jugState, int]()
+	empty := jugState{
+		jug1: jug{0, 3},
+		jug2: jug{0, 5},
+	}
+	goal := jugState{
+		jug1: jug{0, 3},
+		jug2: jug{4, 5},
+	}
+	b.ResetTimer()
+	var paths []jugState
+	for i := 0; i < b.N; i++ {
+		paths = PathFind[jugState, jugState](w, empty, goal)
+	}
+	_ = paths
+}
+
 type knapsackGraph struct {
 	Grapher[knapsackItem, knapsackItem, int]
 	items []knapsackItem
@@ -164,4 +183,22 @@ func TestKnapsack(t *testing.T) {
 	}
 	t.Log(paths)
 	t.Log("paths length:", len(paths))
+}
+
+func BenchmarkKnapsack(b *testing.B) {
+	k := knapsackGraph{items: []knapsackItem{
+		{name: "ransom", capacity: knapsackCap, weight: 10, value: 30},
+		{name: "health-kit", capacity: knapsackCap, weight: 20, value: 100},
+		{name: "elixir", capacity: knapsackCap, weight: 30, value: 120},
+	},
+	}
+
+	k.Grapher = NewDefault[knapsackItem, knapsackItem, int]()
+	empty := knapsackItem{name: "empty", capacity: knapsackCap}
+	goal := knapsackItem{name: "full", weight: knapsackCap}
+	var paths []knapsackItem
+	for i := 0; i < b.N; i++ {
+		paths = PathFind[knapsackItem, knapsackItem](k, empty, goal)
+	}
+	_ = paths
 }
