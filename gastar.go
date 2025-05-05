@@ -26,33 +26,33 @@ type Hasher interface {
 	Hash() string
 }
 
-type Grapher[K Hasher, V any, H cmp.Ordered] interface {
+type Grapher[K Hasher, H cmp.Ordered] interface {
 	Neighbors(K) []K
 	Cost(k1, k2 K) H
 	Distance(k1, k2 K) H
 }
 
-type DefaultGrapher[K Hasher, V any, H cmp.Ordered] struct{}
+type DefaultGrapher[K Hasher, H cmp.Ordered] struct{}
 
-func (*DefaultGrapher[K, V, H]) Cost(n1, n2 K) H {
+func (*DefaultGrapher[K, H]) Cost(n1, n2 K) H {
 	var cost H
 	return cost
 }
 
-func (*DefaultGrapher[K, V, H]) Distance(n1, n2 K) H {
+func (*DefaultGrapher[K, H]) Distance(n1, n2 K) H {
 	var distance H
 	return distance
 }
 
-func NewDefault[K Hasher, V any, H cmp.Ordered]() Grapher[K, V, H] {
-	return &DefaultGrapher[K, V, H]{}
+func NewDefault[K Hasher, H cmp.Ordered]() Grapher[K, H] {
+	return &DefaultGrapher[K, H]{}
 }
 
-func (d *DefaultGrapher[K, V, H]) Neighbors(node K) []K {
+func (d *DefaultGrapher[K, H]) Neighbors(node K) []K {
 	return []K{}
 }
 
-func PathFind[K Hasher, V any, H cmp.Ordered](g Grapher[K, V, H], start, goal K) []K {
+func PathFind[K Hasher, V any, H cmp.Ordered](g Grapher[K, H], start, goal K) []K {
 	var (
 		costSoFar = make(map[string]H)
 		visited   = make(map[string]K)

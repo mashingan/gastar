@@ -22,7 +22,7 @@ func (js jugState) Hash() string {
 }
 
 type waterjugs struct {
-	Grapher[jugState, jugState, int]
+	Grapher[jugState, int]
 }
 
 func (w waterjugs) Neighbors(js jugState) []jugState {
@@ -75,7 +75,7 @@ func (w waterjugs) Neighbors(js jugState) []jugState {
 
 func TestUseGastar(t *testing.T) {
 	w := waterjugs{}
-	w.Grapher = NewDefault[jugState, jugState, int]()
+	w.Grapher = NewDefault[jugState, int]()
 	empty := jugState{
 		jug1: jug{0, 3},
 		jug2: jug{0, 5},
@@ -94,7 +94,7 @@ func TestUseGastar(t *testing.T) {
 
 func BenchmarkFindPath(b *testing.B) {
 	w := waterjugs{}
-	w.Grapher = NewDefault[jugState, jugState, int]()
+	w.Grapher = NewDefault[jugState, int]()
 	empty := jugState{
 		jug1: jug{0, 3},
 		jug2: jug{0, 5},
@@ -112,7 +112,7 @@ func BenchmarkFindPath(b *testing.B) {
 }
 
 type knapsackGraph struct {
-	Grapher[knapsackItem, knapsackItem, int]
+	Grapher[knapsackItem, int]
 	items []knapsackItem
 }
 
@@ -165,7 +165,7 @@ func TestKnapsack(t *testing.T) {
 	},
 	}
 
-	k.Grapher = NewDefault[knapsackItem, knapsackItem, int]()
+	k.Grapher = NewDefault[knapsackItem, int]()
 	empty := knapsackItem{name: "empty", capacity: knapsackCap}
 	goal := knapsackItem{name: "full", weight: knapsackCap}
 	paths := PathFind[knapsackItem, knapsackItem](k, empty, goal)
@@ -193,7 +193,7 @@ func BenchmarkKnapsack(b *testing.B) {
 	},
 	}
 
-	k.Grapher = NewDefault[knapsackItem, knapsackItem, int]()
+	k.Grapher = NewDefault[knapsackItem, int]()
 	empty := knapsackItem{name: "empty", capacity: knapsackCap}
 	goal := knapsackItem{name: "full", weight: knapsackCap}
 	var paths []knapsackItem

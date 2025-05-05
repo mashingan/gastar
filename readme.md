@@ -53,7 +53,7 @@ func (js jugState) Hash() string {
 }
 
 type waterjugs struct {
-	Grapher[jugState, jugState, int]
+	Grapher[jugState, int]
 }
 
 func (w waterjugs) Neighbors(js jugState) []jugState {
@@ -112,7 +112,7 @@ func (w waterjugs) Neighbors(js jugState) []jugState {
 
 func main() {
 	w := waterjugs{}
-	w.Grapher = NewDefault[jugState, jugState, int]()
+	w.Grapher = NewDefault[jugState, int]()
 	empty := jugState{
 		jug1: jug{0, 3},
 		jug2: jug{0, 5},
