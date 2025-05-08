@@ -3,6 +3,7 @@ package gastar
 import (
 	"fmt"
 	"math"
+	"strings"
 	"testing"
 )
 
@@ -201,4 +202,118 @@ func BenchmarkKnapsack(b *testing.B) {
 		paths = PathFind[knapsackItem, knapsackItem](k, empty, goal)
 	}
 	_ = paths
+}
+
+const (
+	tileWidth = 3
+	tileTotal = 6
+)
+
+type (
+	tileItem  int8
+	theTiles  [tileTotal]tileItem
+	tileGraph struct {
+		Grapher[theTiles, int]
+		theTiles
+		maxheight int
+	}
+)
+
+func (tt theTiles) String() string {
+	s := strings.Builder{}
+	s.WriteByte('\n')
+	for i, t := range tt {
+		if i > 0 && i%tileWidth == 0 {
+			s.WriteByte('\n')
+		}
+		s.WriteString(fmt.Sprintf(" %d ", t))
+	}
+	s.WriteByte('\n')
+	return s.String()
+}
+
+func (ti theTiles) Hash() string {
+	return fmt.Sprintf("%d%d%d%d%d%d", ti[0], ti[1], ti[2],
+		ti[3], ti[4], ti[5])
+}
+
+func (tg tileGraph) Cost(t1, t2 theTiles) int {
+	return 1
+}
+
+func divmod(a int) (int, int) {
+	return a / tileWidth, a % tileWidth
+}
+
+func (tg tileGraph) Distance(t1, t2 theTiles) int {
+	var r int
+	for i, p2 := range t2 {
+		a1, b1 := divmod(int(t1[i]))
+		a2, b2 := divmod(int(p2))
+		r += int(math.Abs(float64(a1-a2)) + math.Abs(float64(b1-b2)))
+	}
+	return r
+}
+
+func (tg tileGraph) Neighbors(tiles theTiles) []theTiles {
+	restiles := []theTiles{}
+	idx := -1
+	for i, t := range tiles {
+		if t == 0 {
+			idx = i
+			break
+		}
+	}
+	if idx == -1 {
+		return restiles
+	}
+	zrow, zcol := divmod(idx)
+	addresult := func(row, col int) {
+		newidx := row * tileWidth
+		newidx += col
+		if int(newidx) < len(tg.theTiles) && newidx >= 0 {
+			newp := tiles
+			newp[idx], newp[newidx] = newp[newidx], newp[idx]
+			restiles = append(restiles, newp)
+		}
+	}
+	if zcol-1 >= 0 {
+		addresult(zrow, zcol-1)
+	}
+	if zcol+1 <= tileWidth {
+		addresult(zrow, zcol+1)
+	}
+	if zrow-1 >= 0 {
+		addresult(zrow-1, zcol)
+	}
+	if zrow+1 <= tg.maxheight {
+		addresult(zrow+1, zcol)
+	}
+	return restiles
+}
+
+func TestSlider(t *testing.T) {
+	start := [tileTotal]tileItem{3, 0, 5, 1, 4, 2}
+	end := [tileTotal]tileItem{1, 2, 3, 4, 5, 0}
+	tg := tileGraph{
+		theTiles: [tileTotal]tileItem{3, 0, 5, 1, 4, 2},
+	}
+	tg.Grapher = NewDefault[theTiles, int]()
+	tg.maxheight = tileTotal / tileWidth
+	if tileTotal%tileWidth != 0 {
+		tg.maxheight++
+	}
+	t.Log("maxheight::", tg.maxheight)
+	paths := PathFind[theTiles, theTiles](tg, start, end)
+	t.Log(paths)
+	for _, tt := range paths {
+		t.Log(tt)
+	}
+	path2 := [tileTotal]tileItem{1, 3, 5, 0, 4, 2}
+	if paths[2] != path2 {
+		t.Errorf("Expected %q, got %q", path2, paths[2])
+	}
+	if paths[len(paths)-1] != end {
+		t.Errorf("Expected %q, got %q", end, paths[len(paths)-1])
+	}
 }
