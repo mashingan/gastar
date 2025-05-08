@@ -23,7 +23,7 @@ func (js jugState) Hash() string {
 }
 
 type waterjugs struct {
-	Grapher[jugState, int]
+	Grapher[string, jugState, int]
 }
 
 func (w waterjugs) Neighbors(js jugState) []jugState {
@@ -76,7 +76,7 @@ func (w waterjugs) Neighbors(js jugState) []jugState {
 
 func TestUseGastar(t *testing.T) {
 	w := waterjugs{}
-	w.Grapher = NewDefault[jugState, int]()
+	w.Grapher = NewDefault[string, jugState, int]()
 	empty := jugState{
 		jug1: jug{0, 3},
 		jug2: jug{0, 5},
@@ -85,7 +85,7 @@ func TestUseGastar(t *testing.T) {
 		jug1: jug{0, 3},
 		jug2: jug{4, 5},
 	}
-	paths := PathFind[jugState, jugState](w, empty, goal)
+	paths := PathFind[string, jugState, jugState](w, empty, goal)
 	if len(paths) <= 0 {
 		t.Error("Expected get result, found nothing")
 	}
@@ -95,7 +95,7 @@ func TestUseGastar(t *testing.T) {
 
 func BenchmarkFindPath(b *testing.B) {
 	w := waterjugs{}
-	w.Grapher = NewDefault[jugState, int]()
+	w.Grapher = NewDefault[string, jugState, int]()
 	empty := jugState{
 		jug1: jug{0, 3},
 		jug2: jug{0, 5},
@@ -107,13 +107,13 @@ func BenchmarkFindPath(b *testing.B) {
 	b.ResetTimer()
 	var paths []jugState
 	for i := 0; i < b.N; i++ {
-		paths = PathFind[jugState, jugState](w, empty, goal)
+		paths = PathFind[string, jugState, jugState](w, empty, goal)
 	}
 	_ = paths
 }
 
 type knapsackGraph struct {
-	Grapher[knapsackItem, int]
+	Grapher[knapsackItem, knapsackItem, int]
 	items []knapsackItem
 }
 
@@ -126,9 +126,8 @@ type knapsackItem struct {
 	currentValue  uint
 }
 
-func (ki knapsackItem) Hash() string {
-	return fmt.Sprintf("(%s,%d,%d,%d,%d,%d)", ki.name, ki.weight, ki.value,
-		ki.capacity, ki.currentWeight, ki.currentValue)
+func (ki knapsackItem) Hash() knapsackItem {
+	return ki
 }
 
 const knapsackCap = 50
@@ -166,10 +165,10 @@ func TestKnapsack(t *testing.T) {
 	},
 	}
 
-	k.Grapher = NewDefault[knapsackItem, int]()
+	k.Grapher = NewDefault[knapsackItem, knapsackItem, int]()
 	empty := knapsackItem{name: "empty", capacity: knapsackCap}
 	goal := knapsackItem{name: "full", weight: knapsackCap}
-	paths := PathFind[knapsackItem, knapsackItem](k, empty, goal)
+	paths := PathFind[knapsackItem, knapsackItem, knapsackItem](k, empty, goal)
 	if len(paths) < 5 {
 		t.Errorf("Expected get 5 paths exact, found less: (%d)\n", len(paths))
 	}
@@ -194,12 +193,12 @@ func BenchmarkKnapsack(b *testing.B) {
 	},
 	}
 
-	k.Grapher = NewDefault[knapsackItem, int]()
+	k.Grapher = NewDefault[knapsackItem, knapsackItem, int]()
 	empty := knapsackItem{name: "empty", capacity: knapsackCap}
 	goal := knapsackItem{name: "full", weight: knapsackCap}
 	var paths []knapsackItem
 	for i := 0; i < b.N; i++ {
-		paths = PathFind[knapsackItem, knapsackItem](k, empty, goal)
+		paths = PathFind[knapsackItem, knapsackItem, knapsackItem](k, empty, goal)
 	}
 	_ = paths
 }
@@ -213,7 +212,7 @@ type (
 	tileItem  int8
 	theTiles  [tileTotal]tileItem
 	tileGraph struct {
-		Grapher[theTiles, int]
+		Grapher[theTiles, theTiles, int]
 		theTiles
 		maxheight int
 	}
@@ -232,9 +231,8 @@ func (tt theTiles) String() string {
 	return s.String()
 }
 
-func (ti theTiles) Hash() string {
-	return fmt.Sprintf("%d%d%d%d%d%d", ti[0], ti[1], ti[2],
-		ti[3], ti[4], ti[5])
+func (ti theTiles) Hash() theTiles {
+	return ti
 }
 
 func (tg tileGraph) Cost(t1, t2 theTiles) int {
@@ -298,13 +296,13 @@ func TestSlider(t *testing.T) {
 	tg := tileGraph{
 		theTiles: [tileTotal]tileItem{3, 0, 5, 1, 4, 2},
 	}
-	tg.Grapher = NewDefault[theTiles, int]()
+	tg.Grapher = NewDefault[theTiles, theTiles, int]()
 	tg.maxheight = tileTotal / tileWidth
 	if tileTotal%tileWidth != 0 {
 		tg.maxheight++
 	}
 	t.Log("maxheight::", tg.maxheight)
-	paths := PathFind[theTiles, theTiles](tg, start, end)
+	paths := PathFind[theTiles, theTiles, theTiles](tg, start, end)
 	t.Log(paths)
 	for _, tt := range paths {
 		t.Log(tt)

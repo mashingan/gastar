@@ -53,7 +53,7 @@ func (js jugState) Hash() string {
 }
 
 type waterjugs struct {
-	Grapher[jugState, int]
+	Grapher[string, jugState, int]
 }
 
 func (w waterjugs) Neighbors(js jugState) []jugState {
@@ -112,7 +112,7 @@ func (w waterjugs) Neighbors(js jugState) []jugState {
 
 func main() {
 	w := waterjugs{}
-	w.Grapher = NewDefault[jugState, int]()
+	w.Grapher = NewDefault[string, jugState, int]()
 	empty := jugState{
 		jug1: jug{0, 3},
 		jug2: jug{0, 5},
@@ -121,7 +121,7 @@ func main() {
 		jug1: jug{0, 3},
 		jug2: jug{4, 5},
 	}
-	paths := PathFind[jugState, jugState](w, empty, goal)
+	paths := PathFind[string, jugState, jugState](w, empty, goal)
 	if len(paths) <= 0 {
 		panic("Expected get result, found nothing")
 	}
@@ -131,7 +131,11 @@ func main() {
 ```
 
 In above example, we explicitly implement Neighbors method and Hasher interface for node type because both of
-those are mandatory. We skipped Cost and Distance method
+those are mandatory.
+Grapher also need the comparable type to be fed to Hasher interface. In above example, we used `string`
+as the Hasher result but any comparable type, like array, flat/simple struct, string, int, float
+that can be used for key in map are acceptable.
+We skipped Cost and Distance method
 because both are optionals.  
 In this case, no cost and distance for each state's transition
 means we searched it by Breath-first Search (BFS).
